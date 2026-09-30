@@ -1,0 +1,29 @@
+.message {
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+}
+
+.message[data-variant='error'] {
+  border-style: solid;
+  border-color: var(--color-danger);
+}
+
+.title {
+  font-weight: 600;
+}
+
+.message[data-variant='error'] .title {
+  color: var(--color-danger);
+}
+
+.description {
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+}
+
+.action {
+  margin-top: var(--space-4);
+}

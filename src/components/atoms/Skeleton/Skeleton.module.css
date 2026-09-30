@@ -1,0 +1,27 @@
+.skeleton {
+  display: block;
+  width: 100%;
+  background: var(--color-skeleton);
+  border-radius: var(--radius);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.skeleton[data-variant='text'] {
+  height: 1rem;
+}
+
+.skeleton[data-variant='block'] {
+  height: 4rem;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}

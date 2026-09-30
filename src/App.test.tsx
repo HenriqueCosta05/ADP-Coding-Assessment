@@ -1,19 +1,11 @@
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import App from './App'
 
 describe('App', () => {
-  it('renders the heading', () => {
+  it('renders the users page heading and its loading state', () => {
     render(<App />)
-    expect(screen.getByRole('heading', { name: /get started/i })).toBeInTheDocument()
-  })
-
-  it('increments the counter on click', async () => {
-    const user = userEvent.setup()
-    render(<App />)
-    const button = screen.getByRole('button', { name: /count is 0/i })
-    await user.click(button)
-    expect(button).toHaveTextContent('Count is 1')
+    expect(screen.getByRole('heading', { name: 'Users' })).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Loading users…')
   })
 })
