@@ -10,7 +10,7 @@ import styles from './UserList.module.css'
 export type UserListProps = { disabled?: boolean } & (
   | { status: 'loading' }
   | { status: 'error'; onRetry?: () => void }
-  | { status: 'success'; users: readonly User[] }
+  | { status: 'success'; users: readonly User[]; query?: string }
 )
 
 const SKELETON_WIDTHS = ['48%', '62%', '40%', '55%', '35%']
@@ -31,9 +31,10 @@ function UserListSkeleton() {
 interface ExpandableUserListProps {
   users: readonly User[]
   disabled: boolean
+  query: string
 }
 
-function ExpandableUserList({ users, disabled }: ExpandableUserListProps) {
+function ExpandableUserList({ users, disabled, query }: ExpandableUserListProps) {
   const [expandedIds, setExpandedIds] = useState<ReadonlySet<number>>(() => new Set())
   const expandedCount = users.filter((user) => expandedIds.has(user.id)).length
 
@@ -41,6 +42,14 @@ function ExpandableUserList({ users, disabled }: ExpandableUserListProps) {
     const next = new Set(expandedIds)
     if (!next.delete(id)) next.add(id)
     setExpandedIds(next)
+  }
+
+  if (users.length === 0) {
+    return query ? (
+      <StatusMessage variant="empty" title="No matching users" description={`No user name contains “${query}”.`} />
+    ) : (
+      <StatusMessage variant="empty" title="No users yet" description="Users will appear here once they are added." />
+    )
   }
 
   return (
@@ -77,11 +86,7 @@ function UserList(props: UserListProps) {
         />
       )
     case 'success':
-      return props.users.length === 0 ? (
-        <StatusMessage variant="empty" title="No users yet" description="Users will appear here once they are added." />
-      ) : (
-        <ExpandableUserList users={props.users} disabled={disabled} />
-      )
+      return <ExpandableUserList users={props.users} disabled={disabled} query={props.query?.trim() ?? ''} />
   }
 }
 

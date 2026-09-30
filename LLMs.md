@@ -104,3 +104,32 @@ I updated the relative imports to match the per-component folders:
 - `UserList.tsx`: `UserListItem` and `UserListItemSkeleton` from `../molecules/UserListItem/`.
 
 Typecheck, ESLint and all 11 tests pass after the change. `UserList` itself is still a flat file in `organisms/`, so its imports were left as they are. I also added interactions 2 and 3 to this file.
+
+## Interaction 4: Integration layer (fetch, Autocomplete, API note, mock fallback)
+
+### Model
+
+Claude Sonnet 5.5 (`claude-sonnet-5-5`), run through Claude Code in the Claude desktop app.
+
+### Prompt
+
+> Now, we are going to build the integration layer. Based on the initial description provided, you are asked to:
+>
+> 1. fetch optimistically the list of users loaded from the API URL (MUST BE A GLOBAL VARIABLE, so developers can `easily modify the origin if needed`
+> 2. Create an `Autocomplete` component to ensure search can be done in real time
+> 3. Add a note that the API link provided is not working (TODO) right now (use the full date), and a flush DNS has been done and other network troubleshooting stuff, without any success from here
+> 4. If API is not responding, use mock values to populate the screen
+
+### Response
+
+I built the integration layer. Typecheck, ESLint, the comment policy, the build and all 33 tests pass.
+
+No API URL was provided in the conversation or the repo, so `src/config/api.ts` uses the placeholder `https://jsonplaceholder.typicode.com` (chosen because it matches the `User` shape). It needs replacing with the real link.
+
+- **Global API settings:** `API_ORIGIN`, `USERS_ENDPOINT` and `REQUEST_TIMEOUT_MS` live in `src/config/api.ts`, so the origin changes in one place.
+- **Fetching:** `fetchUsers` (`src/services/usersApi.ts`) validates the payload and throws on non-2xx responses or unexpected shapes. The `useUsers` hook (`src/hooks/useUsers.ts`) starts the request as soon as the app mounts, aborts it on unmount, enforces a 5-second timeout, and exposes `reload`. I read "optimistically" as assuming the API works and showing the loading state, rather than showing mock data first and swapping it.
+- **Mock fallback:** on any failure, `useUsers` uses `src/mocks/users.ts` and logs a `console.warn`. `UsersPage` then shows a "Showing sample data" notice with a "Try again" button, so admins never mistake mock records for real ones.
+- **Autocomplete:** `src/components/molecules/Autocomplete` is an accessible combobox (ARIA 1.2) with keyboard support (arrows, Enter, Escape), plus loading, disabled and "no matches" variants. `UsersPage` filters the list on every keystroke using `filterUsersByName`.
+- **Search behaviour:** `UserList` shows "No matching users" when a search has no results, and expanded names stay open while filtering.
+- **TODO note:** a 2-line TODO dated September 30, 2026 sits in `src/config/api.ts` (the comment policy caps comments at 2 lines). The full note is in a README "Known issues" section, covering the DNS flush and other network troubleshooting without success.
+- **Tests:** service, hook, `Autocomplete`, `UsersPage` and `App`, using a stubbed `fetch`.
