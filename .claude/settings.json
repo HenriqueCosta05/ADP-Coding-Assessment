@@ -1,0 +1,53 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/qa-precheck.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/qa-postcheck.sh",
+            "timeout": 60
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/qa-comments.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "Run the Vitest test suite with: npx vitest run (if npx is not on PATH, source .claude/hooks/env.local.sh first when it exists). If any tests fail, analyze the failures, fix the issues, and re-run until all tests pass. Do not stop until the test suite is green. Context: $ARGUMENTS",
+            "timeout": 180
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Review the sub-agent's test results. Check: 1) Did every new or changed test run and pass under Vitest? 2) Were any tests skipped (.skip/.todo) or focused (.only) without explanation? 3) Did all assertions use expect() statements, and did tests query the DOM with Testing Library role/text queries instead of raw CSS selectors? If any check fails, report the issues. Context: $ARGUMENTS"
+          }
+        ]
+      }
+    ]
+  }
+}
