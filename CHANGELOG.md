@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Mock users in `src/mocks/users.ts`, used automatically when the API does not respond, with a "Showing sample data" notice and a "Try again" button
 - `Autocomplete` component (accessible combobox) and real-time name search on `UsersPage`
 - `Notice` component for non-blocking messages
+- Paginated, virtualized `Autocomplete` suggestions: only the visible window is rendered, and a "Load more" button at the end of the list appends the next page (5 names per page); typing resets to the first page
+- More mock users (20 in total) so pagination can be exercised without the API
 - README "Known issues" section: the API link is not working (TODO, September 30, 2026) despite a DNS flush and other network troubleshooting
 - Vitest and Testing Library tests for the service, hook, `Autocomplete`, `UsersPage`, `UserList`, `AddressDetails` and `App`, with sample users in `src/test/fixtures`
 - `LLMs.md` recording the model, prompt and response for each LLM interaction
@@ -22,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `App` loads data through `useUsers` and renders `UsersPage`
+- `USERS_ENDPOINT` ignores a trailing slash in `API_ORIGIN`
 - `UserList` shows a "No matching users" message when a search has no results and keeps expanded names while filtering
 
 ### Removed

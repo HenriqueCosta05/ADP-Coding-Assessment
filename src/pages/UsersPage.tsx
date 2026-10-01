@@ -8,7 +8,7 @@ import type { User } from '../types/user'
 import { filterUsersByName } from '../utils/filterUsers'
 import styles from './UsersPage.module.css'
 
-const MAX_SUGGESTIONS = 8
+const PAGE_SIZE = 5
 
 interface UsersPageProps {
   status: 'loading' | 'success'
@@ -19,9 +19,21 @@ interface UsersPageProps {
 
 function UsersPage({ status, users, source, onReload }: UsersPageProps) {
   const [query, setQuery] = useState('')
+  const [page, setPage] = useState(1)
   const isLoading = status === 'loading'
   const matches = filterUsersByName(users, query)
-  const suggestions = [...new Set(matches.map((user) => user.name))].slice(0, MAX_SUGGESTIONS)
+  const names = [...new Set(matches.map((user) => user.name))]
+  const suggestions = names.slice(0, page * PAGE_SIZE)
+
+  const handleQueryChange = (value: string) => {
+    setQuery(value)
+    setPage(1)
+  }
+
+  const handleReload = () => {
+    setPage(1)
+    onReload()
+  }
 
   return (
     <main className={styles.page}>
@@ -34,7 +46,7 @@ function UsersPage({ status, users, source, onReload }: UsersPageProps) {
           title="Showing sample data"
           description="The users API didn't respond, so these are example records."
           action={
-            <Button variant="secondary" onClick={onReload}>
+            <Button variant="secondary" onClick={handleReload}>
               Try again
             </Button>
           }
@@ -47,7 +59,9 @@ function UsersPage({ status, users, source, onReload }: UsersPageProps) {
         options={suggestions}
         loading={isLoading}
         emptyMessage="No users match your search"
-        onValueChange={setQuery}
+        hasMore={names.length > suggestions.length}
+        onLoadMore={() => setPage((current) => current + 1)}
+        onValueChange={handleQueryChange}
       />
       {isLoading ? <UserList status="loading" /> : <UserList status="success" users={matches} query={query} />}
     </main>

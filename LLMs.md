@@ -133,3 +133,29 @@ No API URL was provided in the conversation or the repo, so `src/config/api.ts` 
 - **Search behaviour:** `UserList` shows "No matching users" when a search has no results, and expanded names stay open while filtering.
 - **TODO note:** a 2-line TODO dated September 30, 2026 sits in `src/config/api.ts` (the comment policy caps comments at 2 lines). The full note is in a README "Known issues" section, covering the DNS flush and other network troubleshooting without success.
 - **Tests:** service, hook, `Autocomplete`, `UsersPage` and `App`, using a stubbed `fetch`.
+
+## Interaction 5: Pagination with a virtualized Autocomplete
+
+### Model
+
+Claude Sonnet 5.5 (`claude-sonnet-5-5`), run through Claude Code in the Claude desktop app.
+
+### Prompt
+
+> Now, to make sure everything works fine, implement pagination for displaying more users.
+>
+> Requirements:
+>
+> 1. Autocomplete now behaves as a Virtualized List, so on search, the query must fill what the user types. If the user starts scrolling, on the end of the results list a `load more` button must be implemented to increase the page and append to the list
+
+### Response
+
+I implemented paginated, virtualized suggestions in `Autocomplete`. Typecheck, ESLint, the comment policy and all 42 tests pass.
+
+- **Virtualization:** `Autocomplete` renders only the options in the scroll window (fixed 40px rows, 5 visible, 2 overscan). The scroll height is preserved, and each option carries `aria-posinset` and `aria-setsize`. Keyboard navigation scrolls the active option into view, so `aria-activedescendant` always points to a rendered element.
+- **Load more:** when the parent passes `hasMore`, a "Load more" button sits at the end of the scrollable list, so it appears once the user scrolls down. It calls `onLoadMore` and has a `loadingMore` variant (disabled with a spinner). It does not close the list, including when reached with Tab.
+- **Paging state:** `UsersPage` owns it. Suggestions are the unique names that match the query, sliced to `page * 5`, and typing resets to page 1. "Load more" appends the next 5. Reload also resets the page.
+- **Query:** the input stays controlled, so it shows exactly what the user types. Picking a suggestion fills it with that name, and the list below filters to it.
+- **Client-side paging:** this works the same for API data and mock fallback. If the real API supports server paging (for example `_page`/`_limit`), the page state is ready to drive `fetchUsers` instead.
+- **Mocks:** `src/mocks/users.ts` grew to 20 users so several pages exist without the API.
+- **Endpoint fix:** `API_ORIGIN` in `src/config/api.ts` now ends with a slash, which produced `//users`. `USERS_ENDPOINT` now strips trailing slashes, so either form of the origin works.
