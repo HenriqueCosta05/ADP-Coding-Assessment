@@ -6,7 +6,8 @@ import { fetchUsers } from './usersApi'
 const apiUser = {
   id: 7,
   name: 'Kurtis Weissnat',
-  address: { street: 'Rex Trail', suite: 'Suite 280', city: 'Howemouth', zipcode: '58804-1099', geo: { lat: '24.8918', lng: '21.8984' } },
+  address: { street: 'Rex Trail', suite: 'Suite 280', city: 'Howemouth', zipcode: '58804-1099' },
+  phone: '210.067.6132',
 }
 
 describe('fetchUsers', () => {
@@ -14,8 +15,8 @@ describe('fetchUsers', () => {
     vi.unstubAllGlobals()
   })
 
-  it('requests the configured endpoint and maps users', async () => {
-    stubFetchJson([apiUser])
+  it('requests the configured endpoint and maps users, dropping unused fields', async () => {
+    stubFetchJson([{ ...apiUser, email: 'Telly.Hoeger@billy.biz', address: { ...apiUser.address, geo: { lat: '1', lng: '2' } } }])
     const users = await fetchUsers()
     expect(fetch).toHaveBeenCalledWith(USERS_ENDPOINT, expect.objectContaining({ headers: { Accept: 'application/json' } }))
     expect(users).toEqual([apiUser])
@@ -23,7 +24,7 @@ describe('fetchUsers', () => {
 
   it('keeps a user whose address is malformed, with a null address', async () => {
     stubFetchJson([{ id: 1, name: 'No Address', address: { street: 'Only street' } }])
-    await expect(fetchUsers()).resolves.toEqual([{ id: 1, name: 'No Address', address: null }])
+    await expect(fetchUsers()).resolves.toEqual([{ id: 1, name: 'No Address', address: null, phone: null }])
   })
 
   it('rejects on a non-2xx response', async () => {

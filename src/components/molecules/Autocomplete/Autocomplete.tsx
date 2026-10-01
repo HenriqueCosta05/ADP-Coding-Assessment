@@ -1,5 +1,6 @@
 import { useId, useState, type FocusEvent, type KeyboardEvent, type UIEvent } from 'react'
 import Button from '../../atoms/Button/Button'
+import Spinner from '../../atoms/Spinner/Spinner'
 import styles from './Autocomplete.module.css'
 
 const OPTION_HEIGHT = 40
@@ -114,7 +115,7 @@ function Autocomplete({
           aria-busy={loading || undefined}
           value={value}
           placeholder={placeholder}
-          disabled={disabled || loading}
+          disabled={disabled}
           onChange={(event) => {
             onValueChange(event.target.value)
             setOpen(true)
@@ -123,6 +124,11 @@ function Autocomplete({
           }}
           onKeyDown={handleKeyDown}
         />
+        {loading ? (
+          <span className={styles.spinner}>
+            <Spinner size="sm" />
+          </span>
+        ) : null}
         {showListbox ? (
           <div
             className={styles.popup}

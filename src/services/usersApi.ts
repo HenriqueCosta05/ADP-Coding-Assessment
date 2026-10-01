@@ -6,18 +6,17 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
 const isString = (value: unknown): value is string => typeof value === 'string'
 
 function toAddress(raw: unknown): Address | null {
-  if (!isRecord(raw) || !isRecord(raw.geo)) return null
+  if (!isRecord(raw)) return null
   const { street, suite, city, zipcode } = raw
-  const { lat, lng } = raw.geo
-  if (!isString(street) || !isString(suite) || !isString(city) || !isString(zipcode) || !isString(lat) || !isString(lng)) return null
-  return { street, suite, city, zipcode, geo: { lat, lng } }
+  if (!isString(street) || !isString(suite) || !isString(city) || !isString(zipcode)) return null
+  return { street, suite, city, zipcode }
 }
 
 function toUser(raw: unknown): User {
   if (!isRecord(raw) || typeof raw.id !== 'number' || !isString(raw.name)) {
     throw new Error('Unexpected user shape in API response')
   }
-  return { id: raw.id, name: raw.name, address: toAddress(raw.address) }
+  return { id: raw.id, name: raw.name, address: toAddress(raw.address), phone: isString(raw.phone) ? raw.phone : null }
 }
 
 export async function fetchUsers(signal?: AbortSignal): Promise<User[]> {

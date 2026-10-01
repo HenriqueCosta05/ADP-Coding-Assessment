@@ -4,6 +4,7 @@
   background: var(--color-surface);
   border: 1px dashed var(--color-border);
   border-radius: var(--radius);
+  animation: enter var(--duration-base) var(--ease-out);
 }
 
 .message[data-variant='error'] {
@@ -26,4 +27,11 @@
 
 .action {
   margin-top: var(--space-4);
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
 }

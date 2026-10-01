@@ -13,10 +13,18 @@
   border: 0;
   border-radius: var(--radius);
   cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
 }
 
-.button:hover:not(:disabled) {
+.button:hover:not(:disabled),
+.button[aria-expanded='true']:not(:disabled) {
   background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+}
+
+.button:active:not(:disabled) {
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
 }
 
 .button:focus-visible {
@@ -39,15 +47,15 @@
   width: 1.25rem;
   height: 1.25rem;
   color: var(--color-text-muted);
-  transition: transform 150ms ease;
+  transition:
+    transform var(--duration-base) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+
+.button:hover:not(:disabled) .chevron {
+  color: var(--color-text);
 }
 
 .button[aria-expanded='true'] .chevron {
   transform: rotate(180deg);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .chevron {
-    transition: none;
-  }
 }

@@ -10,7 +10,7 @@ import styles from './UserList.module.css'
 export type UserListProps = { disabled?: boolean } & (
   | { status: 'loading' }
   | { status: 'error'; onRetry?: () => void }
-  | { status: 'success'; users: readonly User[]; query?: string }
+  | { status: 'success'; users: readonly User[]; query?: string; pending?: boolean }
 )
 
 const SKELETON_WIDTHS = ['48%', '62%', '40%', '55%', '35%']
@@ -32,9 +32,10 @@ interface ExpandableUserListProps {
   users: readonly User[]
   disabled: boolean
   query: string
+  pending: boolean
 }
 
-function ExpandableUserList({ users, disabled, query }: ExpandableUserListProps) {
+function ExpandableUserList({ users, disabled, query, pending }: ExpandableUserListProps) {
   const [expandedIds, setExpandedIds] = useState<ReadonlySet<number>>(() => new Set())
   const expandedCount = users.filter((user) => expandedIds.has(user.id)).length
 
@@ -61,7 +62,7 @@ function ExpandableUserList({ users, disabled, query }: ExpandableUserListProps)
         onExpandAll={() => setExpandedIds(new Set(users.map((user) => user.id)))}
         onCollapseAll={() => setExpandedIds(new Set())}
       />
-      <ul className={styles.list} aria-label="Users">
+      <ul className={styles.list} aria-label="Users" aria-busy={pending || undefined} data-pending={pending}>
         {users.map((user) => (
           <UserListItem key={user.id} user={user} expanded={expandedIds.has(user.id)} disabled={disabled} onToggle={toggle} />
         ))}
@@ -86,7 +87,7 @@ function UserList(props: UserListProps) {
         />
       )
     case 'success':
-      return <ExpandableUserList users={props.users} disabled={disabled} query={props.query?.trim() ?? ''} />
+      return <ExpandableUserList users={props.users} disabled={disabled} query={props.query?.trim() ?? ''} pending={props.pending ?? false} />
   }
 }
 

@@ -15,36 +15,38 @@ describe('useUsers', () => {
     vi.restoreAllMocks()
   })
 
-  it('starts in the loading state', () => {
+  it('optimistically shows sample users while the request is pending', () => {
     stubFetchJson(users)
     const { result } = renderHook(() => useUsers())
-    expect(result.current).toMatchObject({ status: 'loading', users: [], source: null })
+    expect(result.current).toMatchObject({ isPending: true, source: null })
+    expect(result.current.users).toBe(mockUsers)
   })
 
-  it('exposes the users returned by the API', async () => {
+  it('replaces the optimistic users with the ones returned by the API', async () => {
     stubFetchJson(users)
     const { result } = renderHook(() => useUsers())
-    await waitFor(() => expect(result.current.status).toBe('success'))
+    await waitFor(() => expect(result.current.isPending).toBe(false))
     expect(result.current.source).toBe('api')
     expect(result.current.users).toHaveLength(users.length)
+    expect(result.current.users[0].name).toBe('Leanne Graham')
   })
 
-  it('falls back to mock users when the API is unreachable', async () => {
+  it('keeps the sample users when the API is unreachable', async () => {
     stubFetchNetworkError()
     const { result } = renderHook(() => useUsers())
-    await waitFor(() => expect(result.current.status).toBe('success'))
+    await waitFor(() => expect(result.current.isPending).toBe(false))
     expect(result.current.source).toBe('mock')
     expect(result.current.users).toBe(mockUsers)
   })
 
-  it('retries the request on reload', async () => {
+  it('retries on reload and swaps in the API users', async () => {
     stubFetchNetworkError()
     const { result } = renderHook(() => useUsers())
     await waitFor(() => expect(result.current.source).toBe('mock'))
 
     stubFetchJson(users)
     act(() => result.current.reload())
-    expect(result.current.status).toBe('loading')
     await waitFor(() => expect(result.current.source).toBe('api'))
+    expect(result.current.users[0].name).toBe('Leanne Graham')
   })
 })

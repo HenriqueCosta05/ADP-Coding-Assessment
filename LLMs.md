@@ -159,3 +159,44 @@ I implemented paginated, virtualized suggestions in `Autocomplete`. Typecheck, E
 - **Client-side paging:** this works the same for API data and mock fallback. If the real API supports server paging (for example `_page`/`_limit`), the page state is ready to drive `fetchUsers` instead.
 - **Mocks:** `src/mocks/users.ts` grew to 20 users so several pages exist without the API.
 - **Endpoint fix:** `API_ORIGIN` in `src/config/api.ts` now ends with a slash, which produced `//users`. `USERS_ENDPOINT` now strips trailing slashes, so either form of the origin works.
+
+## Interaction 6: QA pass (palette, shadows, alignment, animations, optimistic UI, details, search)
+
+### Model
+
+Claude Sonnet 5.5 (`claude-sonnet-5-5`), run through Claude Code in the Claude desktop app.
+
+### Prompt
+
+> Now it's QA time. Given the following resources below, I want you to:
+>
+> 1. Replace globally the colors with a proper color palette
+> 2. Add shadows to the `Autocomplete` component options to ensure they are not the same color as the Expandable User List Item component
+> 3. Ensure the Autocomplete component's vertical alignment is following the other component's widths.
+> 4. Add basic animations for the system, such as transitions, so users can smoothly make use of the system with better UI Feedbacks.
+> 5. Add Optimistic UI using the `useOptimistic` hook and loading indications while API is loading.
+> 6. Remove other information rather than address and phone number from expanded user info
+> 7. Enhance the search algorithm to match any type of user field (not just name)
+>
+> Resources: https://react.dev/reference/react/useOptimistic
+>
+> The Waikawa gray palette (`--waikawa-gray-50` to `--waikawa-gray-950`, 11 shades from `#eef1f7` to `#0c111b`) was pasted as a `:root` CSS block.
+
+### Response
+
+All seven items are done. Typecheck, ESLint, the comment policy, the production build and all 57 tests pass.
+
+1. **Palette:** the Waikawa gray scale is in `src/styles/palette.css`. `src/styles/tokens.css` maps it to semantic tokens for light and dark mode, and no component CSS has hard-coded colors any more. Two colors stay outside the palette on purpose: white for light-mode surfaces and a red for the error state, since the palette has no red.
+2. **Dropdown shadows:** the dropdown uses its own `--color-elevated` surface, which differs from the user list items, plus a popover shadow, inset separators between options, and a lifted shadow on the active option. I checked it in the browser: popup `gray-800` against `gray-900` items in dark mode.
+3. **Alignment:** a global `box-sizing: border-box` was missing, and `.field` had `max-width: 95%`. Fixing both makes the input, dropdown, list and items share the same left edge and width. I confirmed this in the browser (identical x and width).
+4. **Animations:** buttons, disclosure rows, the chevron, inputs and the dropdown get transitions. List items, notices and the dropdown fade in on mount, and the details panel fades in and out using `@starting-style`. `prefers-reduced-motion` turns everything off.
+5. **Optimistic UI:**
+   - `useUsers` now uses `useOptimistic` inside a `useTransition` Action. It seeds sample users instantly, while `isPending` drives the loading UI. The real result is committed in a nested `startTransition`, so React then swaps the optimistic users for the real ones, as in the React docs.
+   - On reload, the current users are kept instead of reverting to samples.
+   - The loading UI is a new `Spinner` atom, a loading notice, a busy search field with a spinner (still usable), and a dimmed, `aria-busy` list.
+6. **Details:** the expanded section shows only the address (street, suite, city, zip code) and the phone number. Coordinates were removed. The `User` type gained `phone`, and `AddressDetails` was renamed `UserDetails`. Missing values read "Not on file".
+7. **Search:** `searchUsers` replaces the name-only filter. It matches every user field except `id`, so new fields are searched automatically. It ignores case and accents, requires every typed word to match somewhere, and matches phone numbers typed without punctuation.
+
+Notes:
+- The `phone` field was added to your 10 mock users, and their coordinates were dropped. Your comment in the mocks file was kept.
+- The dev server on port 5173 showed live API users, so the API appears reachable from the browser. The README "Known issues" TODO may be outdated, but I left it as is.

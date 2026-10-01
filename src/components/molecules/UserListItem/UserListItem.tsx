@@ -1,7 +1,7 @@
 import { useId } from 'react'
 import type { User } from '../../../types/user'
 import DisclosureButton from '../../atoms/DisclosureButton/DisclosureButton'
-import AddressDetails from '../AddressDetails/AddressDetails'
+import UserDetails from '../UserDetails/UserDetails'
 import styles from './UserListItem.module.css'
 
 interface UserListItemProps {
@@ -22,7 +22,7 @@ function UserListItem({ user, expanded, disabled = false, onToggle }: UserListIt
         {user.name}
       </DisclosureButton>
       <div id={panelId} role="region" aria-labelledby={toggleId} hidden={!expanded} className={styles.panel}>
-        <AddressDetails address={user.address} />
+        <UserDetails address={user.address} phone={user.phone} />
       </div>
     </li>
   )

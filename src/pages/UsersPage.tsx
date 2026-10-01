@@ -5,23 +5,22 @@ import Button from '../components/atoms/Button/Button'
 import UserList from '../components/organisms/UserList'
 import type { UsersSource } from '../hooks/useUsers'
 import type { User } from '../types/user'
-import { filterUsersByName } from '../utils/filterUsers'
+import { searchUsers } from '../utils/searchUsers'
 import styles from './UsersPage.module.css'
 
 const PAGE_SIZE = 5
 
 interface UsersPageProps {
-  status: 'loading' | 'success'
   users: readonly User[]
   source: UsersSource | null
+  isPending: boolean
   onReload: () => void
 }
 
-function UsersPage({ status, users, source, onReload }: UsersPageProps) {
+function UsersPage({ users, source, isPending, onReload }: UsersPageProps) {
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
-  const isLoading = status === 'loading'
-  const matches = filterUsersByName(users, query)
+  const matches = searchUsers(users, query)
   const names = [...new Set(matches.map((user) => user.name))]
   const suggestions = names.slice(0, page * PAGE_SIZE)
 
@@ -39,9 +38,15 @@ function UsersPage({ status, users, source, onReload }: UsersPageProps) {
     <main className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.title}>Users</h1>
-        <p className={styles.description}>Select a name to see the address on file. Open several at once to compare them.</p>
+        <p className={styles.description}>Select a name to see the address and phone number on file. Open several at once to compare them.</p>
       </header>
-      {source === 'mock' ? (
+      {isPending ? (
+        <Notice
+          loading
+          title="Loading the latest users…"
+          description={source === null ? 'Showing sample data until the API responds.' : undefined}
+        />
+      ) : source === 'mock' ? (
         <Notice
           title="Showing sample data"
           description="The users API didn't respond, so these are example records."
@@ -54,16 +59,20 @@ function UsersPage({ status, users, source, onReload }: UsersPageProps) {
       ) : null}
       <Autocomplete
         label="Search users"
-        placeholder="Type a name"
+        placeholder="Search by name, phone, address…"
         value={query}
         options={suggestions}
-        loading={isLoading}
+        loading={isPending}
         emptyMessage="No users match your search"
         hasMore={names.length > suggestions.length}
         onLoadMore={() => setPage((current) => current + 1)}
         onValueChange={handleQueryChange}
       />
-      {isLoading ? <UserList status="loading" /> : <UserList status="success" users={matches} query={query} />}
+      {isPending && users.length === 0 ? (
+        <UserList status="loading" />
+      ) : (
+        <UserList status="success" users={matches} query={query} pending={isPending} />
+      )}
     </main>
   )
 }

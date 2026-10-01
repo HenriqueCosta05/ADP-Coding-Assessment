@@ -59,11 +59,17 @@ describe('Autocomplete', () => {
     expect(screen.getByRole('status')).toHaveTextContent('No matches found')
   })
 
-  it('is disabled while loading or when disabled', () => {
-    const { rerender } = render(<Harness loading />)
-    expect(screen.getByRole('combobox')).toBeDisabled()
-    expect(screen.getByRole('combobox')).toHaveAttribute('aria-busy', 'true')
-    rerender(<Harness disabled />)
+  it('stays usable but reports busy while loading', async () => {
+    const user = userEvent.setup()
+    render(<Harness loading />)
+    const input = screen.getByRole('combobox')
+    expect(input).toHaveAttribute('aria-busy', 'true')
+    await user.type(input, 'ne')
+    expect(input).toHaveValue('ne')
+  })
+
+  it('is disabled when disabled', () => {
+    render(<Harness disabled />)
     expect(screen.getByRole('combobox')).toBeDisabled()
   })
 })

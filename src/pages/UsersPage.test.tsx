@@ -6,15 +6,37 @@ import { users } from '../test/fixtures/users'
 import UsersPage from './UsersPage'
 
 describe('UsersPage', () => {
-  it('disables search and shows placeholders while loading', () => {
-    render(<UsersPage status="loading" users={[]} source={null} onReload={vi.fn()} />)
-    expect(screen.getByRole('combobox', { name: 'Search users' })).toBeDisabled()
-    expect(screen.getByRole('status')).toHaveTextContent('Loading users…')
+  it('shows skeleton rows and a loading notice while pending with nothing to show', () => {
+    render(<UsersPage users={[]} source={null} isPending onReload={vi.fn()} />)
+    expect(screen.getByText('Loading users…')).toBeInTheDocument()
+    expect(screen.getByText('Loading the latest users…')).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Search users' })).toHaveAttribute('aria-busy', 'true')
+  })
+
+  it('keeps the optimistic users searchable and marked as pending while the API loads', async () => {
+    const user = userEvent.setup()
+    render(<UsersPage users={users} source={null} isPending onReload={vi.fn()} />)
+    expect(screen.getByText('Showing sample data until the API responds.')).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: 'Users' })).toHaveAttribute('aria-busy', 'true')
+    await user.type(screen.getByRole('combobox', { name: 'Search users' }), 'howell')
+    expect(screen.getAllByRole('button', { name: /Graham|Howell|Bauch/ })).toHaveLength(1)
+  })
+
+  it('searches the address and phone fields, not only the name', async () => {
+    const user = userEvent.setup()
+    render(<UsersPage users={users} source="api" isPending={false} onReload={vi.fn()} />)
+    const input = screen.getByRole('combobox', { name: 'Search users' })
+    await user.type(input, 'wisoky')
+    expect(screen.getByRole('button', { name: 'Ervin Howell' })).toBeInTheDocument()
+    await user.clear(input)
+    await user.type(input, '7707368031')
+    expect(screen.getByRole('button', { name: 'Leanne Graham' })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /Graham|Howell|Bauch/ })).toHaveLength(1)
   })
 
   it('filters the list in real time while typing', async () => {
     const user = userEvent.setup()
-    render(<UsersPage status="success" users={users} source="api" onReload={vi.fn()} />)
+    render(<UsersPage users={users} source="api" isPending={false} onReload={vi.fn()} />)
     expect(screen.getAllByRole('button', { name: /Graham|Howell|Bauch/ })).toHaveLength(3)
     await user.type(screen.getByRole('combobox', { name: 'Search users' }), 'howe')
     expect(screen.getAllByRole('button', { name: /Graham|Howell|Bauch/ })).toHaveLength(1)
@@ -23,7 +45,7 @@ describe('UsersPage', () => {
 
   it('shows a no-results message and recovers when the search is cleared', async () => {
     const user = userEvent.setup()
-    render(<UsersPage status="success" users={users} source="api" onReload={vi.fn()} />)
+    render(<UsersPage users={users} source="api" isPending={false} onReload={vi.fn()} />)
     const input = screen.getByRole('combobox', { name: 'Search users' })
     await user.type(input, 'zzz')
     expect(screen.getByText('No matching users')).toBeInTheDocument()
@@ -33,7 +55,7 @@ describe('UsersPage', () => {
 
   it('keeps expanded names open while filtering', async () => {
     const user = userEvent.setup()
-    render(<UsersPage status="success" users={users} source="api" onReload={vi.fn()} />)
+    render(<UsersPage users={users} source="api" isPending={false} onReload={vi.fn()} />)
     await user.click(screen.getByRole('button', { name: 'Leanne Graham' }))
     await user.type(screen.getByRole('combobox', { name: 'Search users' }), 'zzz')
     await user.clear(screen.getByRole('combobox', { name: 'Search users' }))
@@ -43,14 +65,14 @@ describe('UsersPage', () => {
   it('warns about sample data and offers a retry', async () => {
     const user = userEvent.setup()
     const onReload = vi.fn()
-    render(<UsersPage status="success" users={users} source="mock" onReload={onReload} />)
+    render(<UsersPage users={users} source="mock" isPending={false} onReload={onReload} />)
     expect(screen.getByText('Showing sample data')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Try again' }))
     expect(onReload).toHaveBeenCalledOnce()
   })
 
   it('does not show the sample data notice for API data', () => {
-    render(<UsersPage status="success" users={users} source="api" onReload={vi.fn()} />)
+    render(<UsersPage users={users} source="api" isPending={false} onReload={vi.fn()} />)
     expect(screen.queryByText('Showing sample data')).not.toBeInTheDocument()
   })
 
@@ -59,11 +81,12 @@ describe('UsersPage', () => {
       id: index + 1,
       name: `Person ${String(index + 1).padStart(2, '0')}`,
       address: null,
+      phone: null,
     }))
 
     it('shows one page of suggestions and appends the next page on load more', async () => {
       const user = userEvent.setup()
-      render(<UsersPage status="success" users={manyUsers} source="api" onReload={vi.fn()} />)
+      render(<UsersPage users={manyUsers} source="api" isPending={false} onReload={vi.fn()} />)
       await user.click(screen.getByRole('combobox', { name: 'Search users' }))
       await user.keyboard('{ArrowDown}')
       expect(screen.getAllByRole('option')[0]).toHaveAttribute('aria-setsize', '5')
@@ -76,7 +99,7 @@ describe('UsersPage', () => {
 
     it('starts again from the first page when the query changes', async () => {
       const user = userEvent.setup()
-      render(<UsersPage status="success" users={manyUsers} source="api" onReload={vi.fn()} />)
+      render(<UsersPage users={manyUsers} source="api" isPending={false} onReload={vi.fn()} />)
       const input = screen.getByRole('combobox', { name: 'Search users' })
       await user.click(input)
       await user.keyboard('{ArrowDown}')
@@ -87,7 +110,7 @@ describe('UsersPage', () => {
 
     it('fills the input with the selected suggestion and filters the list to it', async () => {
       const user = userEvent.setup()
-      render(<UsersPage status="success" users={manyUsers} source="api" onReload={vi.fn()} />)
+      render(<UsersPage users={manyUsers} source="api" isPending={false} onReload={vi.fn()} />)
       const input = screen.getByRole('combobox', { name: 'Search users' })
       await user.type(input, 'Person 0')
       await user.click(screen.getByRole('option', { name: 'Person 03' }))

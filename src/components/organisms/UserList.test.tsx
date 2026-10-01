@@ -57,7 +57,7 @@ describe('UserList', () => {
     render(<UserList status="success" users={users} />)
     expect(screen.getByRole('button', { name: 'Collapse all' })).toBeDisabled()
     await user.click(screen.getByRole('button', { name: 'Expand all' }))
-    expect(screen.getByText('No address on file.')).toBeVisible()
+    expect(screen.getAllByText('Not on file')[0]).toBeVisible()
     expect(screen.getByRole('button', { name: 'Expand all' })).toBeDisabled()
     await user.click(screen.getByRole('button', { name: 'Collapse all' }))
     expect(screen.getByText('0 of 3 expanded')).toBeInTheDocument()
